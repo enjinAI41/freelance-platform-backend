@@ -8,6 +8,21 @@ import { ResponseTransformInterceptor } from './common/interceptors/response-tra
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  const localhostOriginPattern = /^http:\/\/localhost:\d+$/;
+
+  app.enableCors({
+    origin: (origin, callback) => {
+      // Browser preflight may use dynamic Vite ports; allow localhost dev origins.
+      if (!origin || localhostOriginPattern.test(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  });
+
   // DTO validator ayarlari: bilinmeyen alanlari temizle ve hataya cevir
   app.useGlobalPipes(
     new ValidationPipe({

@@ -17,7 +17,7 @@ import { PrismaModule } from '../../prisma/prisma.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         // Access token default imzalama ayari
-        secret: config.get<string>('JWT_ACCESS_SECRET'),
+        secret: config.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: {
           expiresIn: config.get<string>('JWT_ACCESS_EXPIRES', '15m'),
         },

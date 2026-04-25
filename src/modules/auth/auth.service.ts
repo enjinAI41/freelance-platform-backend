@@ -37,8 +37,8 @@ export class AuthService {
   }
 
   private async signTokens(payload: JwtPayload) {
-    const accessSecret = this.configService.get<string>('JWT_ACCESS_SECRET');
-    const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
+    const accessSecret = this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
+    const refreshSecret = this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
 
     const accessExpires = this.configService.get<string>('JWT_ACCESS_EXPIRES', '15m');
     const refreshExpires = this.configService.get<string>('JWT_REFRESH_EXPIRES', '7d');
@@ -164,7 +164,7 @@ export class AuthService {
   }
 
   async refresh(dto: RefreshTokenDto) {
-    const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
+    const refreshSecret = this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
 
     let payload: JwtPayload;
     try {

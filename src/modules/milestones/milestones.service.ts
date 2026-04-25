@@ -85,6 +85,16 @@ export class MilestonesService {
 
     return this.prisma.milestone.findMany({
       where: { projectId },
+      include: {
+        payment: {
+          select: {
+            id: true,
+            amount: true,
+            currency: true,
+            status: true,
+          },
+        },
+      },
       orderBy: { sequence: 'asc' },
     });
   }
