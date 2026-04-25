@@ -1,4 +1,14 @@
-﻿import { IsDateString, IsEnum, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+﻿import {
+  ArrayMaxSize,
+  IsArray,
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { JobStatus } from '@prisma/client';
 
 export class UpdateJobDto {
@@ -10,6 +20,18 @@ export class UpdateJobDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  category?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  @MaxLength(40, { each: true })
+  skills?: string[];
 
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })

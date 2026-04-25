@@ -66,10 +66,12 @@ export class AuthService {
       throw new BadRequestException('Email already in use');
     }
 
-    const role = await this.prisma.role.findUnique({ where: { name: dto.role } });
-    if (!role) {
-      throw new BadRequestException('Invalid role');
-    }
+    // Rol seed unutulsa bile register akisi kirilmasin diye rol kaydini garanti et.
+    const role = await this.prisma.role.upsert({
+      where: { name: dto.role },
+      update: {},
+      create: { name: dto.role },
+    });
 
     const passwordHash = await this.hashData(dto.password);
 
@@ -228,4 +230,3 @@ export class AuthService {
     return { message: 'Logged out successfully' };
   }
 }
-

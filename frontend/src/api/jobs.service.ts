@@ -1,5 +1,5 @@
 import api from './axios'
-import type { CreateJobInput, Job } from '../types/job'
+import type { CreateJobInput, Job, ListJobsFilters } from '../types/job'
 
 type ApiEnvelope<T> = {
   success: boolean
@@ -23,8 +23,10 @@ function unwrapResponse<T>(payload: T | ApiEnvelope<T>): T {
 }
 
 export const jobsService = {
-  async list(): Promise<Job[]> {
-    const { data } = await api.get<ApiEnvelope<JobsListPayload>>('/jobs')
+  async list(filters?: ListJobsFilters): Promise<Job[]> {
+    const { data } = await api.get<ApiEnvelope<JobsListPayload>>('/jobs', {
+      params: filters,
+    })
     const payload = unwrapResponse<JobsListPayload>(data)
 
     if (Array.isArray(payload)) {

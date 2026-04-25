@@ -14,6 +14,7 @@ import {
   RoleName,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AssignArbiterDto } from './dto/assign-arbiter.dto';
 import { CreateDisputeDto } from './dto/create-dispute.dto';
 import { ListDisputesQueryDto } from './dto/list-disputes-query.dto';
 import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
@@ -62,6 +63,7 @@ export class DisputesService {
               milestoneId: dto.milestoneId ?? null,
               openedById,
               reason: dto.reason,
+              evidenceUrls: dto.evidenceUrls,
               status: DisputeStatus.OPEN,
               activeKey,
             },
@@ -116,6 +118,7 @@ export class DisputesService {
         project: { select: { id: true, title: true, status: true, customerId: true, freelancerId: true } },
         milestone: { select: { id: true, title: true, sequence: true } },
         openedBy: { select: { id: true, fullName: true } },
+        assignedArbiter: { select: { id: true, fullName: true } },
         resolvedBy: { select: { id: true, fullName: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -129,6 +132,7 @@ export class DisputesService {
         project: { select: { id: true, title: true, status: true, customerId: true, freelancerId: true } },
         milestone: { select: { id: true, title: true, sequence: true, status: true } },
         openedBy: { select: { id: true, fullName: true, email: true } },
+        assignedArbiter: { select: { id: true, fullName: true, email: true } },
         resolvedBy: { select: { id: true, fullName: true, email: true } },
       },
     });
@@ -201,6 +205,58 @@ export class DisputesService {
     );
   }
 
+  async assignArbiter(disputeId: number, actorId: number, roles: string[], dto: AssignArbiterDto) {
+    if (!roles.includes(RoleName.ARBITER)) {
+      throw new ForbiddenException('Only ARBITER can assign disputes');
+    }
+
+    const targetArbiterId = dto.arbiterId ?? actorId;
+
+    return this.prisma.$transaction(
+      async (tx) => {
+        const [dispute, targetArbiterRole] = await Promise.all([
+          tx.dispute.findUnique({ where: { id: disputeId } }),
+          tx.userRole.findFirst({
+            where: {
+              userId: targetArbiterId,
+              role: { name: RoleName.ARBITER },
+            },
+          }),
+        ]);
+
+        if (!dispute) {
+          throw new NotFoundException('Dispute not found');
+        }
+
+        if (!targetArbiterRole) {
+          throw new BadRequestException('Target user is not an ARBITER');
+        }
+
+        if (dispute.status !== DisputeStatus.OPEN) {
+          throw new ConflictException('Only open dispute can be assigned');
+        }
+
+        if (dispute.assignedArbiterId && dispute.assignedArbiterId !== targetArbiterId) {
+          throw new ConflictException('Dispute is already assigned to another arbiter');
+        }
+
+        const assigned = await tx.dispute.update({
+          where: { id: disputeId },
+          data: {
+            assignedArbiterId: targetArbiterId,
+          },
+          include: {
+            project: { select: { id: true, title: true } },
+            assignedArbiter: { select: { id: true, fullName: true, email: true } },
+          },
+        });
+
+        return assigned;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+  }
+
   async resolve(disputeId: number, arbiterId: number, roles: string[], dto: ResolveDisputeDto) {
     if (!roles.includes(RoleName.ARBITER)) {
       throw new ForbiddenException('Only ARBITER can resolve dispute');
@@ -228,10 +284,49 @@ export class DisputesService {
           throw new ConflictException('Only open dispute can be resolved');
         }
 
+        if (!dispute.assignedArbiterId) {
+          throw new ConflictException('Dispute must be assigned to an arbiter before resolve');
+        }
+
+        if (dispute.assignedArbiterId !== arbiterId) {
+          throw new ForbiddenException('Only assigned arbiter can resolve this dispute');
+        }
+
         const paymentActionNote = this.buildPaymentActionNote(
           dto.resolution,
           dispute.milestone?.payment?.id ?? null,
         );
+
+        if (dispute.milestone?.payment?.id) {
+          const paymentId = dispute.milestone.payment.id;
+
+          if (dto.resolution === DisputeResolution.RELEASE_PAYMENT) {
+            await tx.payment.update({
+              where: { id: paymentId },
+              data: {
+                status: 'RELEASED',
+                releasedAt: new Date(),
+              },
+            });
+          }
+
+          if (
+            dto.resolution === DisputeResolution.REFUND_PAYMENT ||
+            dto.resolution === DisputeResolution.PARTIAL_REFUND
+          ) {
+            await tx.payment.update({
+              where: { id: paymentId },
+              data: {
+                status: 'REFUNDED',
+                refundedAt: new Date(),
+                refundReason:
+                  dto.resolution === DisputeResolution.PARTIAL_REFUND
+                    ? `Partial refund decision: ${dto.decisionNote}`
+                    : dto.decisionNote,
+              },
+            });
+          }
+        }
 
         const resolvedDispute = await tx.dispute.update({
           where: { id: disputeId },
@@ -276,14 +371,14 @@ export class DisputesService {
 
     switch (resolution) {
       case DisputeResolution.RELEASE_PAYMENT:
-        return `Arbiter decision: release payment. Integration note: call payment release flow (${paymentText}).`;
+        return `Arbiter decision: release payment action applied (${paymentText}).`;
       case DisputeResolution.REFUND_PAYMENT:
-        return `Arbiter decision: refund payment. Integration note: call payment refund flow (${paymentText}).`;
+        return `Arbiter decision: refund payment action applied (${paymentText}).`;
       case DisputeResolution.PARTIAL_REFUND:
-        return `Arbiter decision: partial refund. Integration note: execute split/partial refund orchestration (${paymentText}).`;
+        return `Arbiter decision: partial refund action applied (${paymentText}).`;
       case DisputeResolution.NO_ACTION:
       default:
-        return `Arbiter decision: no payment action. Integration note: no payment/refund command is required (${paymentText}).`;
+        return `Arbiter decision: no payment action applied (${paymentText}).`;
     }
   }
 }

@@ -10,6 +10,7 @@ import { DisputesModule } from './modules/disputes/disputes.module';
 import { HealthModule } from './modules/health/health.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { ProjectsModule } from './modules/projects/projects.module';
+import { ReportsModule } from './modules/reports/reports.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RequestLoggingMiddleware } from './common/middleware/request-logging.middleware';
 
@@ -33,6 +34,7 @@ import { RequestLoggingMiddleware } from './common/middleware/request-logging.mi
     DisputesModule,
     HealthModule,
     PaymentsModule,
+    ReportsModule,
   ],
 })
 export class AppModule implements NestModule {

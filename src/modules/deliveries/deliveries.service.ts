@@ -24,7 +24,11 @@ type TxClient = Omit<
 export class DeliveriesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(milestoneId: number, freelancerId: number, dto: CreateDeliveryDto) {
+  async create(
+    milestoneId: number,
+    freelancerId: number,
+    dto: CreateDeliveryDto & { submissionUrl: string },
+  ) {
     return this.prisma.$transaction(
       async (tx) => {
         const milestone = await tx.milestone.findUnique({
@@ -56,6 +60,9 @@ export class DeliveriesService {
             submittedById: freelancerId,
             version: nextVersion,
             submissionUrl: dto.submissionUrl,
+            fileName: dto.fileName,
+            mimeType: dto.mimeType,
+            fileSizeBytes: dto.fileSizeBytes,
             note: dto.note,
             status: DeliveryStatus.SUBMITTED,
           },
@@ -137,6 +144,7 @@ export class DeliveriesService {
           where: { milestoneId: delivery.milestoneId },
           update: {},
           create: {
+            projectId: delivery.milestone.projectId,
             milestoneId: delivery.milestoneId,
             amount: delivery.milestone.amount,
             currency: delivery.milestone.project.currency,

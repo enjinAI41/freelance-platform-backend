@@ -7,6 +7,7 @@
 } from '@nestjs/common';
 import { BidStatus, JobStatus, Prisma, ProjectStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CreateReviewDto } from './dto/create-review.dto';
 import { ListProjectsQueryDto } from './dto/list-projects-query.dto';
 import { UpdateProjectStatusDto } from './dto/update-project-status.dto';
 
@@ -145,6 +146,76 @@ export class ProjectsService {
               : new Date()
             : undefined,
       },
+    });
+  }
+
+  async createReview(projectId: number, reviewerId: number, dto: CreateReviewDto) {
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if (project.status !== ProjectStatus.COMPLETED) {
+      throw new BadRequestException('Review can only be created after project completion');
+    }
+
+    const isParticipant = project.customerId === reviewerId || project.freelancerId === reviewerId;
+    if (!isParticipant) {
+      throw new ForbiddenException('Only project participants can create reviews');
+    }
+
+    const defaultRevieweeId = reviewerId === project.customerId ? project.freelancerId : project.customerId;
+    const revieweeId = dto.revieweeId ?? defaultRevieweeId;
+
+    if (revieweeId !== project.customerId && revieweeId !== project.freelancerId) {
+      throw new BadRequestException('revieweeId must belong to project participants');
+    }
+
+    if (revieweeId === reviewerId) {
+      throw new BadRequestException('You cannot review yourself');
+    }
+
+    try {
+      return await this.prisma.review.create({
+        data: {
+          projectId,
+          reviewerId,
+          revieweeId,
+          rating: dto.rating,
+          comment: dto.comment,
+        },
+        include: {
+          reviewer: { select: { id: true, fullName: true, email: true } },
+          reviewee: { select: { id: true, fullName: true, email: true } },
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException('You have already reviewed this user for this project');
+      }
+      throw error;
+    }
+  }
+
+  async listReviews(projectId: number, userId: number, roles: string[]) {
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const isParticipant = project.customerId === userId || project.freelancerId === userId;
+    const isArbiter = roles.includes('ARBITER');
+    if (!isParticipant && !isArbiter) {
+      throw new ForbiddenException('You are not allowed to view reviews of this project');
+    }
+
+    return this.prisma.review.findMany({
+      where: { projectId },
+      include: {
+        reviewer: { select: { id: true, fullName: true, email: true } },
+        reviewee: { select: { id: true, fullName: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
     });
   }
 }

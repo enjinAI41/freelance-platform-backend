@@ -15,6 +15,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AuthUser } from '../shared/auth-user.type';
+import { AssignArbiterDto } from './dto/assign-arbiter.dto';
 import { CreateDisputeDto } from './dto/create-dispute.dto';
 import { ListDisputesQueryDto } from './dto/list-disputes-query.dto';
 import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
@@ -55,6 +56,16 @@ export class DisputesController {
     @Body() dto: ResolveDisputeDto,
   ) {
     return this.disputesService.resolve(id, req.user.userId, req.user.roles, dto);
+  }
+
+  @Patch('disputes/:id/assign')
+  @Roles(RoleName.ARBITER)
+  assignArbiter(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: { user: AuthUser },
+    @Body() dto: AssignArbiterDto,
+  ) {
+    return this.disputesService.assignArbiter(id, req.user.userId, req.user.roles, dto);
   }
 
   @Patch('disputes/:id/cancel')

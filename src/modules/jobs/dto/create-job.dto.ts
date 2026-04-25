@@ -1,4 +1,13 @@
-﻿import { IsDateString, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+﻿import {
+  ArrayMaxSize,
+  IsArray,
+  IsDateString,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateJobDto {
   @IsString()
@@ -7,6 +16,18 @@ export class CreateJobDto {
 
   @IsString()
   description!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  category?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  @MaxLength(40, { each: true })
+  skills?: string[];
 
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })

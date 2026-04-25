@@ -41,4 +41,8 @@ export const authService = {
     const { data } = await api.get<ApiEnvelope<User>>('/auth/me')
     return unwrapResponse(data)
   },
+
+  async logout(): Promise<void> {
+    await api.post('/auth/logout')
+  },
 }

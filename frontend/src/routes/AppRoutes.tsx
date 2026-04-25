@@ -5,9 +5,11 @@ import { DashboardPage } from '../pages/DashboardPage'
 import { JobDetailPage } from '../pages/JobDetailPage'
 import { JobsPage } from '../pages/JobsPage'
 import { LoginPage } from '../pages/LoginPage'
+import { ArbiterDeskPage } from '../pages/ArbiterDeskPage'
 import { ProjectDetailPage } from '../pages/ProjectDetailPage'
 import { ProjectsPage } from '../pages/ProjectsPage'
 import { RegisterPage } from '../pages/RegisterPage'
+import { WalletPage } from '../pages/WalletPage'
 import { ProtectedRoute } from './ProtectedRoute'
 
 export function AppRoutes() {
@@ -25,6 +27,8 @@ export function AppRoutes() {
           <Route path="jobs/:id" element={<JobDetailPage />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="wallet" element={<WalletPage />} />
+          <Route path="arbiter-desk" element={<ArbiterDeskPage />} />
         </Route>
       </Route>
 

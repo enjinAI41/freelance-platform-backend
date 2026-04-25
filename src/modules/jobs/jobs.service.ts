@@ -14,6 +14,19 @@ import { ListJobsQueryDto } from './dto/list-jobs-query.dto';
 export class JobsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private normalizeSkills(skills?: string[]) {
+    if (!skills) {
+      return undefined;
+    }
+
+    const normalized = skills
+      .map((skill) => skill.trim())
+      .filter((skill) => skill.length > 0)
+      .map((skill) => skill.toLowerCase());
+
+    return [...new Set(normalized)];
+  }
+
   async create(customerId: number, dto: CreateJobDto) {
     if (dto.budgetMin !== undefined && dto.budgetMax !== undefined && dto.budgetMin > dto.budgetMax) {
       throw new BadRequestException('budgetMin cannot be greater than budgetMax');
@@ -24,6 +37,8 @@ export class JobsService {
         customerId,
         title: dto.title,
         description: dto.description,
+        category: dto.category?.trim() || null,
+        skills: this.normalizeSkills(dto.skills),
         budgetMin: dto.budgetMin,
         budgetMax: dto.budgetMax,
         currency: dto.currency?.toUpperCase() ?? 'TRY',
@@ -51,6 +66,8 @@ export class JobsService {
     const data: Prisma.JobListingUpdateInput = {
       title: dto.title,
       description: dto.description,
+      category: dto.category?.trim() || undefined,
+      skills: dto.skills ? this.normalizeSkills(dto.skills) : undefined,
       budgetMin: dto.budgetMin,
       budgetMax: dto.budgetMax,
       currency: dto.currency ? dto.currency.toUpperCase() : undefined,
@@ -84,6 +101,33 @@ export class JobsService {
         { title: { contains: query.q } },
         { description: { contains: query.q } },
       ];
+    }
+
+    if (query.category) {
+      where.category = { equals: query.category };
+    }
+
+    if (query.skill) {
+      where.skills = {
+        array_contains: [query.skill.toLowerCase()],
+      };
+    }
+
+    if (query.budgetMin !== undefined) {
+      where.budgetMax = { gte: query.budgetMin };
+    }
+
+    if (query.budgetMax !== undefined) {
+      where.budgetMin = { lte: query.budgetMax };
+    }
+
+    if (query.deadlineDaysMax !== undefined) {
+      const maxDeadlineDate = new Date();
+      maxDeadlineDate.setDate(maxDeadlineDate.getDate() + query.deadlineDaysMax);
+      where.deadlineAt = {
+        not: null,
+        lte: maxDeadlineDate,
+      };
     }
 
     const [items, total] = await this.prisma.$transaction([

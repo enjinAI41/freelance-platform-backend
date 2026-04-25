@@ -18,3 +18,12 @@ export interface CreateJobInput {
   description: string
   budget: number
 }
+
+export interface ListJobsFilters {
+  q?: string
+  category?: string
+  skill?: string
+  budgetMin?: number
+  budgetMax?: number
+  deadlineDaysMax?: number
+}

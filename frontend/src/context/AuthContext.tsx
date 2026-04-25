@@ -26,6 +26,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   const logout = () => {
+    void authService.logout().catch(() => undefined)
     localStorage.removeItem(ACCESS_TOKEN_KEY)
     setToken(null)
     setUser(null)
