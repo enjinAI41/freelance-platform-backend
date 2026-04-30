@@ -1,0 +1,318 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleName {
+  CUSTOMER
+  FREELANCER
+  ARBITER
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  CANCELED
+}
+
+enum BidStatus {
+  ACTIVE
+  WITHDRAWN
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum ProjectStatus {
+  PENDING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELED
+  DISPUTED
+  RESOLVED
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  SUBMITTED
+  APPROVED
+  REVISION_REQUESTED
+  OVERDUE
+  CANCELED
+}
+
+enum DeliveryStatus {
+  SUBMITTED
+  APPROVED
+  REVISION_REQUESTED
+}
+
+enum PaymentStatus {
+  PENDING
+  RELEASED
+  REFUNDED
+}
+
+enum DisputeStatus {
+  OPEN
+  CANCELED
+  RESOLVED
+}
+
+enum DisputeResolution {
+  RELEASE_PAYMENT
+  REFUND_PAYMENT
+  PARTIAL_REFUND
+  NO_ACTION
+}
+
+model User {
+  id               Int          @id @default(autoincrement())
+  email            String       @unique @db.VarChar(191)
+  passwordHash     String       @db.VarChar(255)
+  refreshTokenHash String?      @db.VarChar(255)
+  fullName         String       @db.VarChar(120)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  userRoles UserRole[]
+  jobListings JobListing[]
+  bids      Bid[]
+  customerProjects   Project[]   @relation("ProjectCustomer")
+  freelancerProjects Project[]   @relation("ProjectFreelancer")
+  deliveries         Delivery[]
+  disputesOpened     Dispute[]   @relation("DisputeOpenedBy")
+  disputesResolved   Dispute[]   @relation("DisputeResolvedBy")
+  disputesAssigned   Dispute[]   @relation("DisputeAssignedArbiter")
+  reviewsGiven       Review[]    @relation("ReviewGivenBy")
+  reviewsReceived    Review[]    @relation("ReviewReceivedBy")
+
+  @@index([createdAt])
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      RoleName @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userRoles UserRole[]
+}
+
+model UserRole {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  roleId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([roleId, userId])
+}
+
+model JobListing {
+  id          Int       @id @default(autoincrement())
+  customerId  Int
+  title       String    @db.VarChar(180)
+  description String    @db.Text
+  category    String?   @db.VarChar(80)
+  skills      Json?
+  budgetMin   Decimal?  @db.Decimal(12, 2)
+  budgetMax   Decimal?  @db.Decimal(12, 2)
+  currency    String    @default("TRY") @db.Char(3)
+  deadlineAt  DateTime?
+  status      JobStatus @default(OPEN)
+  publishedAt DateTime?
+  closedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  customer User  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  bids     Bid[]
+  project  Project?
+
+  @@index([customerId, status, createdAt])
+  @@index([status, createdAt])
+  @@index([category, status, createdAt])
+}
+
+model Bid {
+  id             Int       @id @default(autoincrement())
+  jobListingId   Int
+  freelancerId   Int
+  coverLetter    String?   @db.Text
+  proposedAmount Decimal   @db.Decimal(12, 2)
+  deliveryDays   Int?
+  status         BidStatus @default(ACTIVE)
+  activeKey      String?   @unique @db.VarChar(64)
+  acceptedAt     DateTime?
+  rejectedAt     DateTime?
+  withdrawnAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  jobListing JobListing @relation(fields: [jobListingId], references: [id], onDelete: Cascade)
+  freelancer User       @relation(fields: [freelancerId], references: [id], onDelete: Restrict)
+  project    Project?   @relation("AcceptedBidProject")
+
+  @@index([jobListingId, status, createdAt])
+  @@index([freelancerId, status, createdAt])
+}
+
+model Project {
+  id            Int           @id @default(autoincrement())
+  jobListingId  Int           @unique
+  acceptedBidId Int           @unique
+  customerId    Int
+  freelancerId  Int
+  title         String        @db.VarChar(180)
+  summary       String?       @db.Text
+  totalAmount   Decimal       @db.Decimal(12, 2)
+  currency      String        @default("TRY") @db.Char(3)
+  startDate     DateTime?
+  endDate       DateTime?
+  status        ProjectStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  jobListing   JobListing   @relation(fields: [jobListingId], references: [id], onDelete: Restrict)
+  acceptedBid  Bid          @relation("AcceptedBidProject", fields: [acceptedBidId], references: [id], onDelete: Restrict)
+  customer     User         @relation("ProjectCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+  freelancer   User         @relation("ProjectFreelancer", fields: [freelancerId], references: [id], onDelete: Restrict)
+  milestones   Milestone[]
+  payments     Payment[]
+  disputes     Dispute[]
+  reviews      Review[]
+
+  @@index([customerId, status, createdAt])
+  @@index([freelancerId, status, createdAt])
+  @@index([status, createdAt])
+}
+
+model Milestone {
+  id          Int             @id @default(autoincrement())
+  projectId   Int
+  title       String          @db.VarChar(180)
+  description String?         @db.Text
+  sequence    Int
+  amount      Decimal         @db.Decimal(12, 2)
+  dueDate     DateTime?
+  status      MilestoneStatus @default(PENDING)
+  approvedAt  DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  deliveries Delivery[]
+  payment    Payment?
+  disputes   Dispute[]
+
+  @@unique([projectId, sequence])
+  @@index([projectId, status, dueDate])
+}
+
+model Delivery {
+  id             Int            @id @default(autoincrement())
+  milestoneId    Int
+  submittedById  Int
+  version        Int
+  submissionUrl  String         @db.VarChar(500)
+  fileName       String?        @db.VarChar(255)
+  mimeType       String?        @db.VarChar(120)
+  fileSizeBytes  Int?
+  note           String?        @db.Text
+  status         DeliveryStatus @default(SUBMITTED)
+  revisionReason String?        @db.Text
+  approvedAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  submittedBy User      @relation(fields: [submittedById], references: [id], onDelete: Restrict)
+
+  @@unique([milestoneId, version])
+  @@index([milestoneId, createdAt])
+  @@index([submittedById, createdAt])
+}
+
+model Payment {
+  id           Int           @id @default(autoincrement())
+  projectId    Int?
+  milestoneId  Int?          @unique
+  amount       Decimal       @db.Decimal(12, 2)
+  currency     String        @db.Char(3)
+  status       PaymentStatus @default(PENDING)
+  releasedAt   DateTime?
+  refundedAt   DateTime?
+  refundReason String?       @db.Text
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  project   Project?   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestone Milestone? @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([status, createdAt])
+}
+
+model Dispute {
+  id                 Int               @id @default(autoincrement())
+  projectId          Int
+  milestoneId        Int?
+  openedById         Int
+  assignedArbiterId  Int?
+  resolvedById       Int?
+  status             DisputeStatus     @default(OPEN)
+  resolution         DisputeResolution?
+  reason             String            @db.Text
+  evidenceUrls       Json?
+  resolutionNote     String?           @db.Text
+  paymentActionNote  String?           @db.Text
+  activeKey          String?           @unique @db.VarChar(64)
+  canceledAt         DateTime?
+  resolvedAt         DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestone  Milestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  openedBy   User      @relation("DisputeOpenedBy", fields: [openedById], references: [id], onDelete: Restrict)
+  assignedArbiter User? @relation("DisputeAssignedArbiter", fields: [assignedArbiterId], references: [id], onDelete: SetNull)
+  resolvedBy User?     @relation("DisputeResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict)
+
+  @@index([projectId, status, createdAt])
+  @@index([openedById, status, createdAt])
+  @@index([resolvedById, status, createdAt])
+  @@index([milestoneId])
+  @@index([assignedArbiterId, status, createdAt])
+}
+
+model Review {
+  id           Int      @id @default(autoincrement())
+  projectId    Int
+  reviewerId   Int
+  revieweeId   Int
+  rating       Int
+  comment      String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  reviewer User    @relation("ReviewGivenBy", fields: [reviewerId], references: [id], onDelete: Restrict)
+  reviewee User    @relation("ReviewReceivedBy", fields: [revieweeId], references: [id], onDelete: Restrict)
+
+  @@unique([projectId, reviewerId, revieweeId])
+  @@index([revieweeId, createdAt])
+  @@index([reviewerId, createdAt])
+}

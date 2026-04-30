@@ -1,0 +1,51 @@
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-freelance_platform}
+    volumes:
+      - freelance_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-password}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD:-password}@mysql:3306/${MYSQL_DATABASE:-freelance_platform}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-change_this_access_secret}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change_this_refresh_secret}
+      JWT_ACCESS_EXPIRES: ${JWT_ACCESS_EXPIRES:-15m}
+      JWT_REFRESH_EXPIRES: ${JWT_REFRESH_EXPIRES:-7d}
+    ports:
+      - "3001:3000"
+    volumes:
+      - backend_uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:3001
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5174:4173"
+
+volumes:
+  freelance_mysql_data:
+  backend_uploads:
