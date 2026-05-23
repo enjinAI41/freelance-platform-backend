@@ -36,7 +36,7 @@ npm run start:dev
 ```
 
 ## Swagger
-- URL: `http://localhost:3000/docs`
+- URL: `http://localhost:3002/docs` (Docker Compose)
 
 ## Main Modules
 - auth

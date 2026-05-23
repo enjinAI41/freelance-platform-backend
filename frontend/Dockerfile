@@ -5,9 +5,8 @@ ARG VITE_API_URL=http://localhost:3001
 ENV VITE_API_URL=${VITE_API_URL}
 
 COPY package*.json ./
-RUN npm ci
-
 COPY . .
+RUN npm ci --include=dev
 RUN npm run build
 
 EXPOSE 4173
