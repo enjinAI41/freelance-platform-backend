@@ -132,12 +132,33 @@ GET  /health
 ```
 
 ## Screenshots
-Screenshot placeholders are prepared in `screenshots/`.
-The following visuals will be added:
-- Swagger UI
-- Frontend home page
-- `docker compose ps` output
-- Database/Prisma evidence
+### Freelancer Panel
+![Freelancer Panel 01](./screenshots/freelancer/freelancer-panel-01.png)
+![Freelancer Panel 02](./screenshots/freelancer/freelancer-panel-02.png)
+![Freelancer Panel 03](./screenshots/freelancer/freelancer-panel-03.png)
+![Freelancer Panel 04](./screenshots/freelancer/freelancer-panel-04.png)
+![Freelancer Panel 05](./screenshots/freelancer/freelancer-panel-05.png)
+![Freelancer Panel 06](./screenshots/freelancer/freelancer-panel-06.png)
+
+### Customer Panel
+![Customer Panel 01](./screenshots/customer/customer-panel-01.png)
+![Customer Panel 02](./screenshots/customer/customer-panel-02.png)
+![Customer Panel 03](./screenshots/customer/customer-panel-03.png)
+![Customer Panel 04](./screenshots/customer/customer-panel-04.png)
+![Customer Panel 05](./screenshots/customer/customer-panel-05.png)
+![Customer Panel 06](./screenshots/customer/customer-panel-06.png)
+![Customer Panel 07](./screenshots/customer/customer-panel-07.png)
+![Customer Panel 08](./screenshots/customer/customer-panel-08.png)
+![Customer Panel 09](./screenshots/customer/customer-panel-09.png)
+![Customer Panel 10](./screenshots/customer/customer-panel-10.png)
+
+### Referee Panel
+![Referee Panel 01](./screenshots/referee/referee-panel-01.png)
+![Referee Panel 02](./screenshots/referee/referee-panel-02.png)
+![Referee Panel 03](./screenshots/referee/referee-panel-03.png)
+![Referee Panel 04](./screenshots/referee/referee-panel-04.png)
+![Referee Panel 05](./screenshots/referee/referee-panel-05.png)
+![Referee Panel 06](./screenshots/referee/referee-panel-06.png)
 
 ## Testing / Verification
 Suggested verification flow:
