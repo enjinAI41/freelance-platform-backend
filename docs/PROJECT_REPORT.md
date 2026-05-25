@@ -1,5 +1,10 @@
 # Project Report
 
+Related docs:
+- [API Documentation](./API_DOCUMENTATION.md)
+- [Development Notes](./DEVELOPMENT_NOTES.md)
+- [README](../README.md)
+
 ## Proje Amaci
 Freelance Platform Backend, freelance is akisini tek bir API uzerinden yonetmek icin tasarlanmistir. Proje; is ilanindan odeme ve itiraz yonetimine kadar tum temel surecleri moduler bir NestJS mimarisi ile ele alir.
 

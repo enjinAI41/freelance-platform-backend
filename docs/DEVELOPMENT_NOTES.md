@@ -1,5 +1,10 @@
 # Development Notes
 
+Related docs:
+- [Project Report](./PROJECT_REPORT.md)
+- [API Documentation](./API_DOCUMENTATION.md)
+- [README](../README.md)
+
 ## Kurulum Notlari
 - `.env` dosyasini `.env.example` uzerinden olusturun.
 - Bagimliliklari `npm install` ile kurun.

@@ -117,6 +117,16 @@ Swagger UI is available at:
 
 Use it to inspect DTO schemas, auth requirements, and endpoint contracts.
 
+## Runtime Verification
+- Backend Swagger: [http://localhost:3002/docs](http://localhost:3002/docs)
+- Frontend: [http://localhost:5174](http://localhost:5174)
+- MySQL: `localhost:3307`
+- Docker Compose status verified with `docker compose ps` (services running: backend, frontend, mysql)
+- System evidence screenshots can be stored under `screenshots/system/`:
+  - `docker-compose-status.png`
+  - `swagger-api.png`
+  - `frontend-preview.png`
+
 ## Example Endpoints
 ```http
 POST /auth/register
@@ -160,6 +170,11 @@ GET  /health
 ![Referee Panel 05](./screenshots/referee/referee-panel-05.png)
 ![Referee Panel 06](./screenshots/referee/referee-panel-06.png)
 
+## Documentation Links
+- [Project Report](./docs/PROJECT_REPORT.md)
+- [API Documentation](./docs/API_DOCUMENTATION.md)
+- [Development Notes](./docs/DEVELOPMENT_NOTES.md)
+
 ## Testing / Verification
 Suggested verification flow:
 
@@ -174,6 +189,19 @@ Then validate:
 - Swagger opens at `http://localhost:3002/docs`
 - Health endpoint responds (`GET /health`)
 - Key module flows can be executed from Swagger
+
+## Available Scripts / Verification
+- `npm run build`: build backend
+- `npm run start:dev`: run backend in watch mode
+- `npm run lint`: lint backend source
+- `npm run prisma:generate`: generate Prisma client
+- `npm run prisma:migrate`: apply migrations (dev)
+- `npm run prisma:seed`: seed database
+- `npm run test:integration:delivery-payment`: delivery/payment integration scenario script
+
+Current Testing Scope:
+- Automated coverage is currently limited to targeted integration verification scripts.
+- Comprehensive unit/e2e suites are not yet included in this repository.
 
 ## Known Limitations
 - No CI/CD pipeline configuration in this repository yet

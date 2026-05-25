@@ -1,5 +1,10 @@
 # API Documentation
 
+Related docs:
+- [Project Report](./PROJECT_REPORT.md)
+- [Development Notes](./DEVELOPMENT_NOTES.md)
+- [README](../README.md)
+
 ## Moduller
 - `auth`: kayit, giris, token yenileme
 - `jobs`: is olusturma, listeleme, guncelleme
