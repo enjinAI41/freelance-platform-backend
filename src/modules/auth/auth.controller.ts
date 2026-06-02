@@ -9,6 +9,7 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { AuthUser } from '../shared/auth-user.type';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -43,7 +44,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout user' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  logout(@Req() req: any) {
+  logout(@Req() req: { user: AuthUser }) {
     return this.authService.logout(req.user.userId);
   }
 
@@ -51,7 +52,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Current user info' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  me(@Req() req: any) {
+  me(@Req() req: { user: AuthUser }) {
     return req.user;
   }
 

@@ -3,7 +3,12 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
-import { static as expressStatic } from 'express';
+import {
+  NextFunction,
+  Request,
+  Response,
+  static as expressStatic,
+} from 'express';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
@@ -26,13 +31,13 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // UTF-8 charset - Türkçe karakter sorunu için
-  app.use((req: any, res: any, next: any) => {
+  // API responses are sent as UTF-8 so Turkish text stays readable in clients.
+  app.use((_req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     next();
   });
 
-  // DTO validator ayarlari: bilinmeyen alanlari temizle ve hataya cevir
+  // DTO validation strips unknown fields and rejects payloads outside the contract.
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

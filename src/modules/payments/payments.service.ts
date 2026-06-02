@@ -6,7 +6,12 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { DeliveryStatus, MilestoneStatus, PaymentStatus, Prisma } from '@prisma/client';
+import {
+  DeliveryStatus,
+  MilestoneStatus,
+  PaymentStatus,
+  Prisma,
+} from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { RefundPaymentDto } from './dto/refund-payment.dto';
@@ -18,25 +23,34 @@ export class PaymentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createPaymentRecord(customerId: number, dto: CreatePaymentDto) {
+    // Payment creation is transactional because project ownership, milestone link, and status checks must agree.
     return this.prisma.$transaction(
       async (tx) => {
-        const project = await tx.project.findUnique({ where: { id: dto.projectId } });
+        const project = await tx.project.findUnique({
+          where: { id: dto.projectId },
+        });
         if (!project) {
           throw new NotFoundException('Project not found');
         }
 
         if (project.customerId !== customerId) {
-          throw new ForbiddenException('Only project customer can create payment record');
+          throw new ForbiddenException(
+            'Only project customer can create payment record',
+          );
         }
 
         if (dto.milestoneId !== undefined) {
-          const milestone = await tx.milestone.findUnique({ where: { id: dto.milestoneId } });
+          const milestone = await tx.milestone.findUnique({
+            where: { id: dto.milestoneId },
+          });
           if (!milestone) {
             throw new NotFoundException('Milestone not found');
           }
 
           if (milestone.projectId !== dto.projectId) {
-            throw new BadRequestException('Milestone does not belong to project');
+            throw new BadRequestException(
+              'Milestone does not belong to project',
+            );
           }
         }
 
@@ -57,10 +71,14 @@ export class PaymentsService {
               milestone.status !== MilestoneStatus.APPROVED ||
               milestone.deliveries.length === 0
             ) {
-              throw new BadRequestException('Released status requires approved delivery');
+              throw new BadRequestException(
+                'Released status requires approved delivery',
+              );
             }
           } else if (project.status !== 'COMPLETED') {
-            throw new BadRequestException('Project-level released payment requires completed project');
+            throw new BadRequestException(
+              'Project-level released payment requires completed project',
+            );
           }
         }
 
@@ -72,13 +90,20 @@ export class PaymentsService {
               amount: dto.amount,
               currency: dto.currency?.toUpperCase() ?? project.currency,
               status: dto.status ?? PaymentStatus.PENDING,
-              releasedAt: dto.status === PaymentStatus.RELEASED ? new Date() : null,
-              refundedAt: dto.status === PaymentStatus.REFUNDED ? new Date() : null,
+              releasedAt:
+                dto.status === PaymentStatus.RELEASED ? new Date() : null,
+              refundedAt:
+                dto.status === PaymentStatus.REFUNDED ? new Date() : null,
             },
           });
         } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-            throw new ConflictException('Payment already exists for this milestone');
+          if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === 'P2002'
+          ) {
+            throw new ConflictException(
+              'Payment already exists for this milestone',
+            );
           }
           throw error;
         }
@@ -96,11 +121,12 @@ export class PaymentsService {
       throw new ForbiddenException('You are not allowed to view payments');
     }
 
-    const projectScope = isCustomer && isFreelancer
-      ? { OR: [{ customerId: userId }, { freelancerId: userId }] }
-      : isCustomer
-        ? { customerId: userId }
-        : { freelancerId: userId };
+    const projectScope =
+      isCustomer && isFreelancer
+        ? { OR: [{ customerId: userId }, { freelancerId: userId }] }
+        : isCustomer
+          ? { customerId: userId }
+          : { freelancerId: userId };
 
     const where: Prisma.PaymentWhereInput = isArbiter
       ? {}
@@ -184,6 +210,7 @@ export class PaymentsService {
   }
 
   async release(paymentId: number, customerId: number) {
+    // Releasing a payment is allowed only after the linked milestone has an approved delivery.
     return this.prisma.$transaction(
       async (tx) => {
         const payment = await tx.payment.findUnique({
@@ -206,22 +233,30 @@ export class PaymentsService {
         }
 
         if (!payment.milestone) {
-          throw new BadRequestException('Only milestone-linked payments can be released');
+          throw new BadRequestException(
+            'Only milestone-linked payments can be released',
+          );
         }
 
         if (payment.milestone.project.customerId !== customerId) {
-          throw new ForbiddenException('Only project customer can release payment');
+          throw new ForbiddenException(
+            'Only project customer can release payment',
+          );
         }
 
         if (payment.status !== PaymentStatus.PENDING) {
-          throw new BadRequestException('Only pending payments can be released');
+          throw new BadRequestException(
+            'Only pending payments can be released',
+          );
         }
 
         if (
           payment.milestone.status !== MilestoneStatus.APPROVED ||
           payment.milestone.deliveries.length === 0
         ) {
-          throw new BadRequestException('Payment can only be released after delivery approval');
+          throw new BadRequestException(
+            'Payment can only be released after delivery approval',
+          );
         }
 
         const releasedPayment = await tx.payment.update({
@@ -243,6 +278,7 @@ export class PaymentsService {
   }
 
   async refund(paymentId: number, customerId: number, dto: RefundPaymentDto) {
+    // Refunds are limited to already released milestone payments owned by the project customer.
     return this.prisma.$transaction(
       async (tx) => {
         const payment = await tx.payment.findUnique({
@@ -261,15 +297,21 @@ export class PaymentsService {
         }
 
         if (!payment.milestone) {
-          throw new BadRequestException('Only milestone-linked payments can be refunded');
+          throw new BadRequestException(
+            'Only milestone-linked payments can be refunded',
+          );
         }
 
         if (payment.milestone.project.customerId !== customerId) {
-          throw new ForbiddenException('Only project customer can refund payment');
+          throw new ForbiddenException(
+            'Only project customer can refund payment',
+          );
         }
 
         if (payment.status !== PaymentStatus.RELEASED) {
-          throw new BadRequestException('Only released payments can be refunded');
+          throw new BadRequestException(
+            'Only released payments can be refunded',
+          );
         }
 
         const refundedPayment = await tx.payment.update({

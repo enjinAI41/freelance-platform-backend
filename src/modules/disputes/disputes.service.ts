@@ -28,32 +28,46 @@ export class DisputesService {
   async create(projectId: number, openedById: number, dto: CreateDisputeDto) {
     return this.prisma.$transaction(
       async (tx) => {
-        const project = await tx.project.findUnique({ where: { id: projectId } });
+        const project = await tx.project.findUnique({
+          where: { id: projectId },
+        });
         if (!project) {
           throw new NotFoundException('Project not found');
         }
 
-        const isParticipant = project.customerId === openedById || project.freelancerId === openedById;
+        const isParticipant =
+          project.customerId === openedById ||
+          project.freelancerId === openedById;
         if (!isParticipant) {
-          throw new ForbiddenException('Only project participant can open dispute');
+          throw new ForbiddenException(
+            'Only project participant can open dispute',
+          );
         }
 
         if (dto.milestoneId !== undefined) {
-          const milestone = await tx.milestone.findUnique({ where: { id: dto.milestoneId } });
+          const milestone = await tx.milestone.findUnique({
+            where: { id: dto.milestoneId },
+          });
           if (!milestone) {
             throw new NotFoundException('Milestone not found');
           }
 
           // Milestone baglandiginda ayni projecte ait olmasi zorunludur.
           if (milestone.projectId !== projectId) {
-            throw new BadRequestException('Milestone does not belong to project');
+            throw new BadRequestException(
+              'Milestone does not belong to project',
+            );
           }
         }
 
         const activeKey = this.buildActiveKey(projectId);
-        const existingOpenDispute = await tx.dispute.findUnique({ where: { activeKey } });
+        const existingOpenDispute = await tx.dispute.findUnique({
+          where: { activeKey },
+        });
         if (existingOpenDispute) {
-          throw new ConflictException('There is already an active dispute for this project');
+          throw new ConflictException(
+            'There is already an active dispute for this project',
+          );
         }
 
         try {
@@ -86,8 +100,13 @@ export class DisputesService {
           return dispute;
         } catch (error) {
           // activeKey unique yarisi olursa 409 olarak don.
-          if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-            throw new ConflictException('There is already an active dispute for this project');
+          if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === 'P2002'
+          ) {
+            throw new ConflictException(
+              'There is already an active dispute for this project',
+            );
           }
           throw error;
         }
@@ -115,7 +134,15 @@ export class DisputesService {
     return this.prisma.dispute.findMany({
       where,
       include: {
-        project: { select: { id: true, title: true, status: true, customerId: true, freelancerId: true } },
+        project: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            customerId: true,
+            freelancerId: true,
+          },
+        },
         milestone: { select: { id: true, title: true, sequence: true } },
         openedBy: { select: { id: true, fullName: true } },
         assignedArbiter: { select: { id: true, fullName: true } },
@@ -129,8 +156,18 @@ export class DisputesService {
     const dispute = await this.prisma.dispute.findUnique({
       where: { id: disputeId },
       include: {
-        project: { select: { id: true, title: true, status: true, customerId: true, freelancerId: true } },
-        milestone: { select: { id: true, title: true, sequence: true, status: true } },
+        project: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            customerId: true,
+            freelancerId: true,
+          },
+        },
+        milestone: {
+          select: { id: true, title: true, sequence: true, status: true },
+        },
         openedBy: { select: { id: true, fullName: true, email: true } },
         assignedArbiter: { select: { id: true, fullName: true, email: true } },
         resolvedBy: { select: { id: true, fullName: true, email: true } },
@@ -142,7 +179,9 @@ export class DisputesService {
     }
 
     const isArbiter = roles.includes(RoleName.ARBITER);
-    const isParticipant = dispute.project.customerId === userId || dispute.project.freelancerId === userId;
+    const isParticipant =
+      dispute.project.customerId === userId ||
+      dispute.project.freelancerId === userId;
     if (!isArbiter && !isParticipant) {
       throw new ForbiddenException('You are not allowed to view this dispute');
     }
@@ -164,9 +203,13 @@ export class DisputesService {
           throw new NotFoundException('Dispute not found');
         }
 
-        const isParticipant = dispute.project.customerId === userId || dispute.project.freelancerId === userId;
+        const isParticipant =
+          dispute.project.customerId === userId ||
+          dispute.project.freelancerId === userId;
         if (!isParticipant) {
-          throw new ForbiddenException('Only project participant can cancel dispute');
+          throw new ForbiddenException(
+            'Only project participant can cancel dispute',
+          );
         }
 
         if (dispute.status !== DisputeStatus.OPEN) {
@@ -205,7 +248,12 @@ export class DisputesService {
     );
   }
 
-  async assignArbiter(disputeId: number, actorId: number, roles: string[], dto: AssignArbiterDto) {
+  async assignArbiter(
+    disputeId: number,
+    actorId: number,
+    roles: string[],
+    dto: AssignArbiterDto,
+  ) {
     if (!roles.includes(RoleName.ARBITER)) {
       throw new ForbiddenException('Only ARBITER can assign disputes');
     }
@@ -236,8 +284,13 @@ export class DisputesService {
           throw new ConflictException('Only open dispute can be assigned');
         }
 
-        if (dispute.assignedArbiterId && dispute.assignedArbiterId !== targetArbiterId) {
-          throw new ConflictException('Dispute is already assigned to another arbiter');
+        if (
+          dispute.assignedArbiterId &&
+          dispute.assignedArbiterId !== targetArbiterId
+        ) {
+          throw new ConflictException(
+            'Dispute is already assigned to another arbiter',
+          );
         }
 
         const assigned = await tx.dispute.update({
@@ -247,7 +300,9 @@ export class DisputesService {
           },
           include: {
             project: { select: { id: true, title: true } },
-            assignedArbiter: { select: { id: true, fullName: true, email: true } },
+            assignedArbiter: {
+              select: { id: true, fullName: true, email: true },
+            },
           },
         });
 
@@ -257,11 +312,17 @@ export class DisputesService {
     );
   }
 
-  async resolve(disputeId: number, arbiterId: number, roles: string[], dto: ResolveDisputeDto) {
+  async resolve(
+    disputeId: number,
+    arbiterId: number,
+    roles: string[],
+    dto: ResolveDisputeDto,
+  ) {
     if (!roles.includes(RoleName.ARBITER)) {
       throw new ForbiddenException('Only ARBITER can resolve dispute');
     }
 
+    // Resolution updates dispute, project, and optional payment records in one transaction.
     return this.prisma.$transaction(
       async (tx) => {
         const dispute = await tx.dispute.findUnique({
@@ -285,11 +346,15 @@ export class DisputesService {
         }
 
         if (!dispute.assignedArbiterId) {
-          throw new ConflictException('Dispute must be assigned to an arbiter before resolve');
+          throw new ConflictException(
+            'Dispute must be assigned to an arbiter before resolve',
+          );
         }
 
         if (dispute.assignedArbiterId !== arbiterId) {
-          throw new ForbiddenException('Only assigned arbiter can resolve this dispute');
+          throw new ForbiddenException(
+            'Only assigned arbiter can resolve this dispute',
+          );
         }
 
         const paymentActionNote = this.buildPaymentActionNote(
@@ -366,8 +431,13 @@ export class DisputesService {
     return `dispute:project:${projectId}:open`;
   }
 
-  private buildPaymentActionNote(resolution: DisputeResolution, paymentId: number | null) {
-    const paymentText = paymentId ? `paymentId=${paymentId}` : 'payment record not found';
+  private buildPaymentActionNote(
+    resolution: DisputeResolution,
+    paymentId: number | null,
+  ) {
+    const paymentText = paymentId
+      ? `paymentId=${paymentId}`
+      : 'payment record not found';
 
     switch (resolution) {
       case DisputeResolution.RELEASE_PAYMENT:
