@@ -1,101 +1,117 @@
-# Project Report
+# Proje Raporu
 
-Related docs:
+İlgili dokümanlar:
 
-- [API Documentation](./API_DOCUMENTATION.md)
-- [Development Notes](./DEVELOPMENT_NOTES.md)
+- [API Dokümantasyonu](./API_DOCUMENTATION.md)
+- [Geliştirme Notları](./DEVELOPMENT_NOTES.md)
 - [README](../README.md)
+- [Kök Proje Raporu](../PROJECT_REPORT.md)
 
-## Proje Amaci
+## Proje Amacı
 
-Freelance Platform Backend, freelance is akisini tek bir API uzerinden yonetmek icin tasarlanmistir. Proje; is ilanindan odeme ve itiraz yonetimine kadar tum temel surecleri moduler bir NestJS mimarisi ile ele alir.
+Bu proje, freelance iş akışlarını yönetmek için geliştirilmiş backend ve frontend uygulamasıdır. Sistem; iş ilanları, teklifler, projeler, kilometre taşları, teslimler, ödemeler, anlaşmazlıklar ve raporlama gibi temel süreçleri tek bir platformda ele alır.
 
-## Yapilan Iyilestirmeler
+Backend tarafında NestJS ve Prisma kullanılmıştır. Frontend tarafında React tabanlı bir arayüz bulunmaktadır. Proje Docker Compose ile backend, frontend ve MySQL servislerinin birlikte çalıştırılabileceği şekilde düzenlenmiştir.
 
-- README profesyonel teslim vitrini formatina getirildi.
-- Teknik dokumantasyon `docs/` altinda konu bazli dosyalara ayrildi.
-- Ekran goruntuleri icin repo-uyumlu `screenshots/.gitkeep` yapisi eklendi.
-- Gereksiz duplicate lock dosyasi tespit edilip temizlendi (`frontend/package-lock 2.json`).
+## Proje Özeti
 
-## Refactoring / Temizlik
+Uygulama modüler bir yapı ile geliştirilmiştir. Backend tarafında `auth`, `jobs`, `bids`, `projects`, `milestones`, `deliveries`, `payments`, `disputes`, `reports` ve `health` modülleri yer almaktadır. Frontend tarafında ise rol bazlı ekranlar, API servisleri, route yapısı, layout bileşenleri ve sayfa bileşenleri ayrı klasörlerde tutulmaktadır.
 
-- Is mantigina dokunmadan dokumantasyon ve repo duzeni iyilestirildi.
-- Sunum odakli basliklar ve dogrulama adimlari standartlastirildi.
-- Projede takip edilmesi gereken klasor yapisi netlestirildi.
+Projenin amacı yalnızca temel işlevleri göstermek değil, aynı zamanda değerlendirici tarafından daha kolay kurulabilir, incelenebilir ve doğrulanabilir bir teslim yapısı oluşturmaktır.
 
-## Docker Duzeltmeleri
+## Görev Paylaşımı ve Proje Geliştirme Süreci
 
-- Docker Compose ile servis calisirligi baz alinarak kurulum adimlari sade bir akisa donusturuldu.
-- `docker compose up -d` ve `docker compose ps` odakli kontrol akisi README'ye eklendi.
+| Ekip Üyesi | Görev ve Sorumluluk Alanları |
+| --- | --- |
+| Engincan Koç | Backend mimarisi, veritabanı tasarımı, REST API servisleri, iş kurallarının backend tarafında doğrulanması ve frontend entegrasyonu. |
+| Berat Çakır | UI/UX tasarımı, kullanıcı arayüzlerinin geliştirilmesi ve kullanıcı deneyimi düzenlemeleri. |
+| Sena Bostan | Fonksiyonel testler, hata ayıklama, mantıksal hata kontrolü ve sistem kararlılığına yönelik incelemeler. |
+| Emine İclal Oğuz | Test senaryoları, edge-case kontrolleri ve teknik dokümantasyon desteği. |
 
-## Port Duzenlemeleri
+## Teknik Uygulama ve Geliştirme Notları
 
-Bu teslim yapisinda asagidaki portlar esas alinmistir:
+### Backend ve Veri Yönetimi
+
+- Proje ilişkisel veritabanı yapısı üzerine kurulmuştur.
+- Kullanıcı kimlik doğrulama akışları JWT tabanlı olarak hazırlanmıştır.
+- Şifreler güvenli şekilde hashlenmektedir.
+- Teslim, ödeme ve anlaşmazlık süreçlerinde temel iş kuralları backend tarafında kontrol edilmektedir.
+
+### Frontend ve Kullanıcı Deneyimi
+
+- Müşteri, freelancer ve hakem rolleri için farklı ekran akışları hazırlanmıştır.
+- API istekleri frontend `src/api` klasörü altında servis bazlı düzenlenmiştir.
+- Sayfa, route, layout, context ve type dosyaları ayrı klasörlerde tutulmuştur.
+- Frontend API varsayılan adresi Docker Compose backend portu ile uyumlu hale getirilmiştir.
+
+### Docker ve Çalışma Ortamı
+
+Docker Compose ile aşağıdaki servislerin birlikte çalıştırılması hedeflenmiştir:
 
 - Backend API: `3002`
 - Frontend: `5174`
 - MySQL: `3307`
 
-## Swagger Dogrulamasi
+Temel çalıştırma komutu:
 
-Swagger UI hedef adresi:
+```bash
+docker compose up -d
+```
+
+Servis durumunu kontrol etmek için:
+
+```bash
+docker compose ps
+```
+
+Swagger UI adresi:
 
 - [http://localhost:3002/docs](http://localhost:3002/docs)
 
-Dokumantasyonda Swagger uzerinden endpoint dogrulamasi ve modul akislari icin kontrol basliklari eklendi.
-
-## Eksikler ve Gelecek Gelistirmeler
-
-- CI/CD ve otomatik kalite kapilari (lint/test/build) eksik.
-- Kapsamli unit/integration/e2e testleri sinirli.
-- Uretim ortami gozlemlenebilirlik (metrics/tracing/log correlation) artirilabilir.
-- Odeme ve itiraz sureclerinde daha detayli edge-case senaryolari eklenebilir.
-
-## 11. Yapılan İyileştirmeler ve Geliştirmeler
+## Yapılan İyileştirmeler ve Geliştirmeler
 
 Bu bölümde proje teslimi kapsamında yapılan düzenlemeler özetlenmiştir. İyileştirmeler, projenin daha kolay kurulabilmesi, daha anlaşılır incelenebilmesi ve Docker ortamında daha tutarlı çalışabilmesi amacıyla yapılmıştır.
 
-### 11.1 Kod Düzenlemeleri (Refactoring)
+### Kod Düzenlemeleri (Refactoring)
 
-- Proje yapısı incelenerek backend, frontend, dokümantasyon ve ekran görüntüsü klasörlerinin rolü daha net hale getirildi.
-- Uygulama iş mantığını değiştirmeden teslim ve inceleme sürecini kolaylaştıran düzenlemeler yapıldı.
-- README ve teknik belgelerde kullanılan kurulum, çalıştırma ve doğrulama adımları daha düzenli bir akışa dönüştürüldü.
+- `src/main.ts` dosyasında Express middleware tipleri daha açık hale getirildi.
+- `src/modules/auth/auth.controller.ts` içinde request user tipi `AuthUser` ile netleştirildi.
+- `src/prisma/prisma.service.ts` içinde Prisma shutdown hook için yerel tip tanımı eklendi.
+- Uygulama iş mantığı değiştirilmeden tip güvenliği ve okunabilirlik artırıldı.
 
-### 11.2 Hata Düzeltmeleri
+### Gereksiz Kodların Temizlenmesi
 
-- Backend servisinin Docker ortamında kullanılan port ayarı düzenlenerek port çakışması giderildi.
-- Frontend Dockerfile dosyasında bağımlılık kurulumu sırasında oluşabilecek problem ele alındı ve frontend imajının daha sorunsuz kurulması hedeflendi.
-- Gereksiz sistem veya kopya dosyalar temizlenerek proje klasörünün daha sade tutulması sağlandı.
+- Frontend tarafında kullanılmayan Vite şablon dosyaları kaldırıldı:
+  - `frontend/src/App.css`
+  - `frontend/src/assets/react.svg`
+  - `frontend/src/assets/vite.svg`
+- Bu dosyalar uygulamada import edilmediği için kaldırılmaları mevcut çalışma akışını değiştirmedi.
 
-### 11.3 Docker ve Ortam İyileştirmeleri
+### Hata Düzeltmeleri
 
-- Docker Compose yapılandırması backend, frontend ve veritabanı servislerinin birlikte daha anlaşılır şekilde çalıştırılabilmesi için düzenlendi.
-- Servis portları dokümantasyonda netleştirildi:
-  - Backend API: `3002`
-  - Frontend: `5174`
-  - MySQL: `3307`
-- `docker compose up -d` ve `docker compose ps` komutlarıyla doğrulanabilecek daha pratik bir kurulum akışı hazırlandı.
-- Projenin manuel ayar ihtiyacı azaltılarak yeni bir ortamda daha kolay kurulabilir hale gelmesi amaçlandı.
+- Backend lint komutunun çalışmasını engelleyen eksik ESLint flat config problemi giderildi.
+- Frontend API varsayılan adresi `http://localhost:3002` olarak güncellendi.
+- `frontend/Dockerfile` içindeki varsayılan `VITE_API_URL` değeri backend portu ile uyumlu hale getirildi.
+- README dosyasında Docker Compose kapsamı ve JWT ortam değişkeni adı düzeltildi.
 
-### 11.4 Dokümantasyon İyileştirmeleri
+### Docker ve Ortam İyileştirmeleri
 
-- README dosyası proje tesliminde incelenmesi gereken temel bilgileri daha açık gösterecek şekilde geliştirildi.
-- Teknik dokümantasyon `docs/` klasörü altında daha düzenli hale getirildi.
-- API dokümantasyonu eklenerek endpoint yapısı ve Swagger üzerinden kontrol edilebilecek bilgiler daha erişilebilir yapıldı.
-- Geliştirme notları ve rapor içeriği, yapılan değişikliklerin takip edilebilmesi için daha açıklayıcı hale getirildi.
+- Docker Compose yapılandırmasında backend, frontend ve veritabanı servislerinin birlikte çalıştırılması netleştirildi.
+- README içinde servis portları ve doğrulama adımları açık hale getirildi.
+- `docker compose config` ile Compose yapılandırmasının geçerli olduğu doğrulandı.
 
-### 11.5 Proje Organizasyonu
+### Dokümantasyon İyileştirmeleri
 
-- Screenshot klasörleri düzenlenerek ekran görüntülerinin proje içinde daha tutarlı bir yerde tutulması sağlandı.
-- Gereksiz sistem dosyaları ve tekrar eden dosyalar temizlenerek proje arşivinin daha düzenli olması sağlandı.
-- Teslim dosyalarının konumu ve amacı daha anlaşılır hale getirildi.
-- Proje, hem geliştirici hem de değerlendirici açısından daha kolay incelenebilir bir yapıya taşındı.
+- README dosyasındaki klasör yapısı ve kurulum bilgileri güncellendi.
+- API dokümantasyonu ve geliştirme notları `docs/` klasörü altında düzenli şekilde tutuldu.
+- Kök rapor ile `docs/PROJECT_REPORT.md` içeriği tutarlı hale getirildi.
+- Zorunlu iyileştirme kriterleri ayrı bir bölümde açıklandı.
 
-## 12. Sonuç
+### Proje Organizasyonu
 
-Yapılan düzenlemeler sonucunda proje, temel işlevlerini değiştirmeden daha düzenli, kurulumu daha anlaşılır ve teknik olarak daha kolay incelenebilir bir hale getirilmiştir. Docker Compose ayarları, port düzenlemeleri, frontend bağımlılık kurulumu, README, API dokümantasyonu ve klasör organizasyonu üzerinde yapılan iyileştirmeler değerlendirme sürecinde projenin daha net anlaşılmasına katkı sağlar.
-
-Bu çalışmalar özellikle teslim kalitesini artırmaya yöneliktir. Projede hâlâ otomatik test kapsamının genişletilmesi, CI/CD adımlarının eklenmesi ve üretim ortamı gözlemlenebilirliğinin geliştirilmesi gibi ileride yapılabilecek iyileştirmeler bulunmaktadır.
+- `screenshots/customer`, `screenshots/freelancer`, `screenshots/referee` ve `screenshots/system` klasörleri README içinde açıkça belirtildi.
+- Frontend `src/assets` klasörü kullanılmayan varsayılan dosyalardan temizlendi.
+- Dokümantasyon dosyaları ve teslim raporları daha kolay bulunabilir hale getirildi.
 
 ## Zorunlu İyileştirme Kriterlerinin Karşılanması
 
@@ -109,18 +125,16 @@ Bu bölümde değerlendirme kriterleri için yapılan somut düzenlemeler özetl
 
 ### Gereksiz kodların temizlenmesi
 
-- Frontend tarafında kullanılmayan Vite şablon dosyaları temizlendi:
-  - `frontend/src/App.css`
-  - `frontend/src/assets/react.svg`
-  - `frontend/src/assets/vite.svg`
-- Bu dosyalar uygulamada import edilmediği için kaldırılmaları mevcut çalışma akışını değiştirmedi.
+- Frontend tarafında kullanılmayan Vite şablon dosyaları temizlendi.
+- Uygulamada kullanılmayan `App.css`, `react.svg` ve `vite.svg` dosyaları kaldırıldı.
+- Gereksiz dosyaların kaldırılmasıyla frontend klasör yapısı daha sade hale getirildi.
 
 ### Hata düzeltmeleri
 
-- Backend lint komutunun çalışmasını engelleyen eksik ESLint flat config problemi giderildi.
-- Frontend API varsayılan adresi `http://localhost:3002` olarak güncellendi ve Docker Compose portlarıyla uyumlu hale getirildi.
-- `frontend/Dockerfile` içindeki varsayılan `VITE_API_URL` değeri backend portu ile tutarlı olacak şekilde düzeltildi.
-- README dosyasında Compose kapsamı ve JWT ortam değişkeni adı düzeltilerek kurulum bilgisinin daha doğru olması sağlandı.
+- Backend lint komutunun çalışmasını engelleyen ESLint yapılandırma eksikliği giderildi.
+- Frontend API varsayılan adresi Docker Compose backend portu olan `3002` ile uyumlu hale getirildi.
+- Frontend Dockerfile içindeki varsayılan API URL değeri düzeltildi.
+- README içindeki eksik veya yanlış kurulum bilgileri güncellendi.
 
 ### Açıklayıcı yorum satırları eklenmesi
 
@@ -137,6 +151,29 @@ Bu bölümde değerlendirme kriterleri için yapılan somut düzenlemeler özetl
 
 ### Proje klasör yapısının iyileştirilmesi
 
-- Frontend `src/assets` klasöründe kullanılmayan varsayılan şablon assetleri kaldırılarak klasör daha sade hale getirildi.
 - README dosyasındaki klasör yapısı `docs`, `screenshots`, `frontend/src` ve `eslint.config.js` bilgilerini daha açık gösterecek şekilde güncellendi.
-- `screenshots` altındaki `customer`, `freelancer`, `referee` ve `system` klasörleri README içinde ayrı ayrı belirtilerek ekran görüntüsü organizasyonu netleştirildi.
+- Screenshot klasörleri README içinde görevlerine göre belirtildi.
+- Frontend `src/assets` klasörü kullanılmayan varsayılan şablon assetlerinden temizlendi.
+
+## Doğrulama
+
+Son yapılan iyileştirmelerden sonra aşağıdaki kontroller çalıştırılmıştır:
+
+- Backend lint: `npm run lint`
+- Backend build: `npm run build`
+- Frontend lint: `npm run lint`
+- Frontend build: `npm run build`
+- Docker Compose yapılandırma kontrolü: `docker compose config`
+
+Bu kontroller başarılı tamamlanmıştır.
+
+## Eksikler ve Gelecek Geliştirmeler
+
+- Kapsamlı unit, integration ve e2e test kapsamı artırılabilir.
+- CI/CD pipeline eklenebilir.
+- Üretim ortamı için gözlemlenebilirlik, log korelasyonu ve metrik toplama geliştirilebilir.
+- Ödeme ve anlaşmazlık süreçlerinde daha fazla edge-case senaryosu eklenebilir.
+
+## Sonuç
+
+Yapılan düzenlemeler sonucunda proje, temel işlevleri değiştirilmeden daha düzenli, kurulumu daha anlaşılır ve teknik olarak daha kolay incelenebilir bir hale getirilmiştir. `docs/PROJECT_REPORT.md` dosyası, kök dizindeki `PROJECT_REPORT.md` dosyasıyla tutarlı hale getirilmiştir.
